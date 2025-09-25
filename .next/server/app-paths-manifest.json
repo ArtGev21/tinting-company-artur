@@ -2,8 +2,6 @@
   "/page": "app/page.js",
   "/about/page": "app/about/page.js",
   "/admin/login/page": "app/admin/login/page.js",
-  "/api/admin/login/route": "app/api/admin/login/route.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/api/admin/sales-reps/route": "app/api/admin/sales-reps/route.js",
-  "/api/admin/logout/route": "app/api/admin/logout/route.js"
+  "/api/admin/login/route": "app/api/admin/login/route.js"
 }

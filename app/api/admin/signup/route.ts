@@ -25,6 +25,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Grant admin role to the new user
+    if (data.user) {
+      const { error: roleError } = await supabaseServer
+        .from('admin_roles')
+        .insert({
+          user_id: data.user.id,
+          role: 'admin'
+        });
+
+      if (roleError) {
+        console.error('Error granting admin role:', roleError);
+        // Note: User is created but role assignment failed
+        // You might want to handle this case differently
+      }
+    }
+
     return NextResponse.json({ success: true, user: data.user });
   } catch (err) {
     console.error('Signup route error:', err);

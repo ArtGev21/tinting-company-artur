@@ -12,10 +12,10 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing env.SUPABAS
 export type Database = {
   public: {
     Tables: {
-      admin_users: {
-        Row: { id: string; username: string; created_at: string };
-        Insert: { username: string; created_at?: string };
-        Update: { username?: string };
+      admin_roles: {
+        Row: { user_id: string; role: string; created_at: string };
+        Insert: { user_id: string; role?: string; created_at?: string };
+        Update: { role?: string; created_at?: string };
       };
     };
   };
