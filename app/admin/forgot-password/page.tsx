@@ -11,6 +11,14 @@ export default function ForgotPassword() {
     e.preventDefault();
 
     console.log('Submitting email for password reset:', email);
+    
+    const { data: user } = await supabaseClient
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    console.log('User found:', user); 
 
     // Reset password email without redirect
     const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email);

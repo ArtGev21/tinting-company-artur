@@ -7,6 +7,8 @@ import { getAdminSession } from '@/lib/auth';
 // Validate admin session
 async function requireAdminSession(req: NextRequest) {
   // Get Supabase session
+  // Use the server client and await the correct method
+  
   const { data, error } = await supabaseServer.auth.getSession();
   const session = data?.session ?? null;
   console.log('Supabase session:', session);
@@ -16,23 +18,24 @@ async function requireAdminSession(req: NextRequest) {
     return null;
   }
 
-  // Check if user has admin role
-  const { data: adminRole, error: userError } = await supabaseServer
-    .from('admin_roles')
+  // Fetch user from all_users table
+  const { data: user, error: userError } = await supabaseServer
+    .from('all_users')
     .select('*')
-    .eq('user_id', session.user.id)
-    .single();
+    .eq('id', session.user.id);
+  console.log('Error:', error, 'Data:', data);
 
   console.log('User fetch error:', userError);
-  console.log('Admin role data:', adminRole);
+  console.log('User data:', user);
 
-  if (userError || !adminRole) {
-    console.log('No admin role found -> returning null');
+  if (userError || !user) {
+    //console.log('No user found -> returning null');
     return null;
   }
 
-  console.log('Admin validated for user:', session.user.email);
-  return { ...session.user, role: adminRole.role };
+  //console.log('Super admin validated for user:', user.email);
+  //console.log('--- requireAdminSession END ---');
+  return user;
 }
 
 // GET /api/admin/sales-reps
