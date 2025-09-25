@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseServer
       .from('all_users')
       .select('*')
-      .eq('email', data.user.id)
+      .eq('id', data.user.id)
       .single();
 
     if (userError || !user) {
