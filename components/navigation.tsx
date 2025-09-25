@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, User, Briefcase, FileText, DivideIcon as LucideIcon, Menu, X, LogOut } from "lucide-react"
+import { Chrome as Home, User, Briefcase, FileText, Divide as LucideIcon, Menu, X, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 

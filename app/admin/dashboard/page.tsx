@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Users, 
-  Plus, 
-  Copy, 
-  Trash2, 
-  Search, 
-  CheckCircle, 
-  AlertCircle,
-  QrCode,
-  User
-} from 'lucide-react';
+import { Users, Plus, Copy, Trash2, Search, CircleCheck as CheckCircle, CircleAlert as AlertCircle, QrCode, User } from 'lucide-react';
 import QRCode from 'qrcode';
 
 interface SalesRep {
