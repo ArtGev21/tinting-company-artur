@@ -42,16 +42,6 @@ export default function AdminDashboard() {
   const [selectedRep, setSelectedRep] = useState<SalesRep | null>(null);
   const [adminUser, setAdminUser] = useState<{ username: string } | null>(null);
 
-  // Check if logged in
-  // useEffect(() => {
-  //   const userInfo = sessionStorage.getItem('all_users');
-  //   if (!userInfo) {
-  //     router.push('/admin/login');
-  //   } else {
-  //     setAdminUser(JSON.parse(userInfo));
-  //   }
-  // }, [router]);
-
   // Load sales reps
   useEffect(() => {
     loadSalesReps();
@@ -67,12 +57,21 @@ export default function AdminDashboard() {
   }, [salesReps, searchTerm]);
 
   const loadSalesReps = async () => {
+    console.log('Loading sales reps...');
     try {
       const response = await fetch('/api/admin/sales-reps');
+      console.log('Response status:', response.status);
+      
       const data = await response.json();
+      console.log('Response data:', data);
+      
       if (data.success) setSalesReps(data.data);
-      else showMessage('error', data.error || 'Failed to load sales reps');
+      else {
+        console.error('Failed to load sales reps:', data.error);
+        showMessage('error', data.error || 'Failed to load sales reps');
+      }
     } catch {
+      console.error('Network error loading sales reps');
       showMessage('error', 'Network error loading sales reps');
     } finally {
       setIsLoadingReps(false);

@@ -46,6 +46,11 @@ export default function Navigation() {
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
+      // Clear any client-side storage
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.clear();
+      }
       router.push('/');
     } catch (error) {
       console.error('Logout error:', error);

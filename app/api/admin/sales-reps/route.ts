@@ -2,65 +2,78 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { sanitizeText, generateRepId } from '@/lib/utils';
-import { getAdminSession } from '@/lib/auth';
 
 // Validate admin session
 async function requireAdminSession(req: NextRequest) {
-  // Get Supabase session
-  // Use the server client and await the correct method
-  
+  try {
+    // Get session from cookies
+    const sessionCookie = req.cookies.get('sb-access-token');
+    if (!sessionCookie) {
+      console.log('No session cookie found');
+      return null;
+    }
+
+    // Verify the session with Supabase
   const { data, error } = await supabaseServer.auth.getSession();
-  const session = data?.session ?? null;
-  console.log('Supabase session:', session);
+    if (error || !data.session) {
+      console.log('Invalid session:', error);
+      return null;
+    }
 
-  if (error || !session) {
-    console.log('No session found -> returning null', error);
+    const session = data.session;
+    console.log('Valid session found for user:', session.user.email);
+
+    // Check if user exists in all_users table
+    const { data: user, error: userError } = await supabaseServer
+      .from('all_users')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !user) {
+      console.log('User not found in all_users table:', userError);
+      return null;
+    }
+
+    console.log('User validated:', user.email);
+    return user;
+  } catch (err) {
+    console.error('Session validation error:', err);
     return null;
   }
-
-  // Fetch user from all_users table
-  const { data: user, error: userError } = await supabaseServer
-    .from('all_users')
-    .select('*')
-    .eq('id', session.user.id);
-  console.log('Error:', error, 'Data:', data);
-
-  console.log('User fetch error:', userError);
-  console.log('User data:', user);
-
-  if (userError || !user) {
-    //console.log('No user found -> returning null');
-    return null;
-  }
-
-  //console.log('Super admin validated for user:', user.email);
-  //console.log('--- requireAdminSession END ---');
-  return user;
 }
 
 // GET /api/admin/sales-reps
 export async function GET(request: NextRequest) {
-  //console.log('--- GET /api/admin/sales-reps START ---');
+  console.log('--- GET /api/admin/sales-reps START ---');
   try {
     const adminUser = await requireAdminSession(request);
     console.log('adminUser:', adminUser);
 
-    // if (!adminUser) {
-    //   console.log('Unauthorized GET request');
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    if (!adminUser) {
+      console.log('Unauthorized GET request');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    //console.log('Fetching sales reps...');
+    console.log('Fetching sales reps...');
     const { data: reps, error: repsError } = await supabaseServer
       .from('sales_reps')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (repsError) return NextResponse.json({ error: 'Failed to fetch sales reps' }, { status: 500 });
+    if (repsError) {
+      console.error('Error fetching sales reps:', repsError);
+      return NextResponse.json({ error: 'Failed to fetch sales reps' }, { status: 500 });
+    }
 
-    // Merge counts via RPCs
+    console.log('Fetched reps:', reps?.length || 0);
+
+    // Get counts via RPCs (if they exist)
     const { data: overallData, error: overallError } = await supabaseServer.rpc('get_sales_rep_overall_clients');
     const { data: monthlyData, error: monthlyError } = await supabaseServer.rpc('get_sales_rep_monthly_clients');
+
+    if (overallError) console.log('Overall RPC error (non-critical):', overallError);
+    if (monthlyError) console.log('Monthly RPC error (non-critical):', monthlyError);
 
     const repsWithCounts = (reps || []).map((rep: any) => {
       const overallRep = Array.isArray(overallData) ? overallData.find((o: any) => o.rep_id === rep.rep_id) : null;
@@ -75,26 +88,26 @@ export async function GET(request: NextRequest) {
       return merged;
     });
 
-    //console.log('Returning repsWithCounts length:', repsWithCounts.length);
-    //console.log('--- GET /api/admin/sales-reps END ---');
+    console.log('Returning repsWithCounts length:', repsWithCounts.length);
+    console.log('--- GET /api/admin/sales-reps END ---');
     return NextResponse.json({ success: true, data: repsWithCounts });
   } catch (err) {
-    //console.error('GET /api/admin/sales-reps error:', err);
+    console.error('GET /api/admin/sales-reps error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // POST /api/admin/sales-reps
 export async function POST(request: NextRequest) {
-  //console.log('--- POST /api/admin/sales-reps START ---');
+  console.log('--- POST /api/admin/sales-reps START ---');
   try {
     const adminUser = await requireAdminSession(request);
-    //console.log('adminUser:', adminUser);
+    console.log('adminUser:', adminUser);
 
-    // if (!adminUser) {
-    //   console.log('Unauthorized POST request');
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    if (!adminUser) {
+      console.log('Unauthorized POST request');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { name, email, phone } = await request.json();
 
@@ -115,13 +128,16 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     
-    if (error) return NextResponse.json({ error: 'Failed to create rep' }, { status: 500 });
+    if (error) {
+      console.error('Error creating sales rep:', error);
+      return NextResponse.json({ error: 'Failed to create rep' }, { status: 500 });
+    }
 
-    //console.log('Successfully created sales rep:', data);
-    //console.log('--- POST /api/admin/sales-reps END ---');
+    console.log('Successfully created sales rep:', data);
+    console.log('--- POST /api/admin/sales-reps END ---');
     return NextResponse.json({ success: true, data });
   } catch (err) {
-    //console.error('POST /api/admin/sales-reps error:', err);
+    console.error('POST /api/admin/sales-reps error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
